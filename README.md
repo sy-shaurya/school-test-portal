@@ -1,2 +1,2 @@
-# school-test-portal
-School test portal 
+# Rsea-test-portal
+RSEA test portal 
