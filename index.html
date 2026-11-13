@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>School Test Portal</title>
+<style>
+:root{--navy:#14213d;--blue:#2563eb;--bg:#f4f7fb;--ink:#172033;--muted:#64748b;--line:#e2e8f0}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#14213d,#1d4ed8);color:white;padding:28px 18px}
+.wrap{max-width:950px;margin:auto}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:clamp(24px,5vw,34px);margin:0 0 6px}.sub{color:#dbeafe;margin:0}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+button,.btn{border:0;border-radius:10px;padding:11px 15px;background:var(--blue);color:white;font-weight:650;cursor:pointer}
+nav button{background:#ffffff20;color:white;border:1px solid #ffffff35}nav button.active{background:white;color:var(--navy)}
+main{max-width:950px;margin:24px auto;padding:0 16px}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 5px 18px #0f172a08}
+h2{margin:0 0 14px;font-size:21px}.muted{color:var(--muted)}label{display:block;font-weight:650;margin:12px 0 6px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:9px;font:inherit;background:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.test{border:1px solid var(--line);padding:15px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.pill{font-size:12px;background:#dcfce7;color:#166534;border-radius:30px;padding:4px 9px;font-weight:700}
+.option{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:11px;margin:8px 0;font-weight:450;cursor:pointer}
+.option input{width:auto;margin-top:4px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.hidden{display:none!important}.danger{background:#dc2626}.secondary{background:#e2e8f0;color:#172033}
+.notice{background:#eff6ff;border:1px solid #bfdbfe;padding:12px;border-radius:10px;color:#1e40af;font-size:14px}
+footer{text-align:center;color:var(--muted);padding:20px;font-size:13px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:14px}
+@media(max-width:600px){.card{padding:16px}table{display:block;overflow-x:auto}}
+</style></head>
+<body>
+<header><div class="wrap">
+ <div class="top"><div><h1 id="schoolTitle">School Test Portal</h1><p class="sub">Learn • Practice • Achieve</p></div><span class="pill">ONLINE TESTS</span></div>
+ <nav><button class="active" data-tab="home">Student Portal</button><button data-tab="admin">Teacher / Admin</button></nav>
+</div></header>
+<main>
+<section id="home">
+ <div class="card"><h2>Welcome to the test portal</h2><p class="muted">Enter your details, choose an available test and submit your answers. Your score will appear after submission.</p>
+ <div class="grid"><div><label for="studentName">Student name</label><input id="studentName" placeholder="Enter your full name" autocomplete="name"></div><div><label for="studentClass">Class / section</label><input id="studentClass" placeholder="e.g. 10-A"></div></div></div>
+ <div class="card"><h2>Available tests</h2><div id="testList" class="muted">No tests published yet. Ask your teacher to add a test.</div></div>
+ <div id="exam" class="card hidden"></div><div id="result" class="card hidden"></div>
+</section>
+<section id="admin" class="hidden">
+ <div class="card"><h2>Teacher / Admin dashboard</h2><p class="notice">Demo mode: tests and results are stored in this browser only. This is not secure for real school examinations or shared results across devices.</p>
+ <div id="setupAdmin"><label>Create an admin PIN for this browser</label><input id="newPin" type="password" inputmode="numeric" placeholder="Choose a PIN"><button style="margin-top:10px" onclick="setPin()">Set PIN</button></div>
+ <div id="loginAdmin" class="hidden"><label>Admin PIN</label><input id="adminPin" type="password" inputmode="numeric" placeholder="Enter PIN"><button style="margin-top:10px" onclick="login()">Unlock dashboard</button></div>
+ <div id="adminPanel" class="hidden">
+ <h3>Create a test</h3><div class="grid"><div><label>Test title</label><input id="newTitle" placeholder="e.g. Science Unit Test"></div><div><label>Duration (minutes)</label><input id="newDuration" type="number" min="1" value="20"></div></div>
+ <div id="questionEditor"></div><div class="row" style="margin-top:12px"><button onclick="addQuestionEditor()" class="secondary">+ Add MCQ</button><button onclick="publishTest()">Publish test</button></div>
+ </div></div>
+ <div class="card"><h2>Submitted results</h2><div id="resultsTable" class="muted">Unlock the dashboard to view results saved in this browser.</div></div>
+</section>
+</main><footer>School Test Portal • Please use a school-approved, secure system for official assessments.</footer>
+<script>
+const KEY='schoolPortalDemo_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"pin":null,"tests":[],"results":[]}');
+let current=null,timer=null,remaining=0,editors=0;
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function tab(name){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.getElementById('home').classList.toggle('hidden',name!=='home');document.getElementById('admin').classList.toggle('hidden',name!=='admin')}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderTests(){let el=document.getElementById('testList');if(!db.tests.length){el.textContent='No tests published yet. Ask your teacher to add a test.';return}el.innerHTML=db.tests.map(t=>`<div class="test"><div><strong>${esc(t.title)}</strong><div class="muted">${t.questions.length} questions • ${t.duration} minutes</div></div><button onclick="startTest('${t.id}')">Start test</button></div>`).join('')}
+function addQuestionEditor(){editors++;let d=document.createElement('div');d.className='card';d.dataset.q='1';d.innerHTML=`<h3>Question ${editors}</h3><label>Question text</label><input class="qtext" placeholder="Type your question"><div class="grid">${[0,1,2,3].map((n)=>`<div><label>Option ${'ABCD'[n]}</label><input class="opt" placeholder="Option ${'ABCD'[n]}"></div>`).join('')}</div><label>Correct option</label><select class="correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>`;document.getElementById('questionEditor').appendChild(d)}
+function setPin(){let p=document.getElementById('newPin').value;if(p.length<4){alert('Please choose a PIN with at least 4 characters.');return}db.pin=p;save();document.getElementById('setupAdmin').classList.add('hidden');document.getElementById('loginAdmin').classList.remove('hidden');alert('PIN saved in this browser.')}
+function login(){if(document.getElementById('adminPin').value!==db.pin){alert('Incorrect PIN');return}document.getElementById('loginAdmin').classList.add('hidden');document.getElementById('adminPanel').classList.remove('hidden');renderResults();if(!editors)addQuestionEditor()}
+function publishTest(){let title=document.getElementById('newTitle').value.trim(),duration=Number(document.getElementById('newDuration').value),nodes=[...document.querySelectorAll('#questionEditor [data-q]')];let questions=nodes.map(n=>({text:n.querySelector('.qtext').value.trim(),opts:[...n.querySelectorAll('.opt')].map(x=>x.value.trim()),correct:Number(n.querySelector('.correct').value)}));if(!title||!duration||!questions.length||questions.some(q=>!q.text||q.opts.some(o=>!o))){alert('Complete the test title and every question and option.');return}db.tests.push({id:Date.now().toString(),title,duration,questions});save();document.getElementById('newTitle').value='';document.getElementById('questionEditor').innerHTML='';editors=0;addQuestionEditor();renderTests();alert('Test published in this browser.')}
+function startTest(id){let name=document.getElementById('studentName').value.trim(),cls=document.getElementById('studentClass').value.trim();if(!name||!cls){alert('Please enter your name and class first.');return}let t=db.tests.find(x=>x.id===id);if(!t)return;current={test:t,name,cls,answers:{}};let e=document.getElementById('exam');document.getElementById('result').classList.add('hidden');e.classList.remove('hidden');e.innerHTML=`<div class="row"><h2>${esc(t.title)}</h2><strong id="clock">${t.duration}:00</strong></div><p class="muted">${t.questions.length} MCQs. Choose one answer for each question.</p>${t.questions.map((q,i)=>`<div class="card"><strong>${i+1}. ${esc(q.text)}</strong>${q.opts.map((o,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}"> ${'ABCD'[j]}. ${esc(o)}</label>`).join('')}</div>`).join('')}<button onclick="submitTest()">Submit test</button>`;remaining=t.duration*60;clearInterval(timer);timer=setInterval(()=>{remaining--;let c=document.getElementById('clock');if(c)c.textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');if(remaining<=0)submitTest()},1000);e.scrollIntoView({behavior:'smooth'})}
+function submitTest(){if(!current)return;clearInterval(timer);let score=0;current.test.questions.forEach((q,i)=>{let a=document.querySelector(`input[name="q${i}"]:checked`);if(a&&Number(a.value)===q.correct)score++});let r={name:current.name,cls:current.cls,test:current.test.title,score,total:current.test.questions.length,date:new Date().toLocaleString()};db.results.push(r);save();current=null;document.getElementById('exam').classList.add('hidden');let el=document.getElementById('result');el.classList.remove('hidden');el.innerHTML=`<h2>Test submitted!</h2><p><strong>${esc(r.name)}</strong> — ${esc(r.test)}</p><h2>${score} / ${r.total}</h2><p class="muted">Your result has been saved in this browser.</p>`;el.scrollIntoView({behavior:'smooth'});renderResults()}
+function renderResults(){let el=document.getElementById('resultsTable');if(!db.results.length){el.textContent='No submissions yet.';return}el.innerHTML=`<table><thead><tr><th>Student</th><th>Class</th><th>Test</th><th>Score</th><th>Submitted</th></tr></thead><tbody>${db.results.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cls)}</td><td>${esc(r.test)}</td><td>${r.score}/${r.total}</td><td>${esc(r.date)}</td></tr>`).join('')}</tbody></table><button class="secondary" style="margin-top:12px" onclick="exportCSV()">Download results CSV</button>`}
+function exportCSV(){let rows=[['Student','Class','Test','Score','Total','Submitted'],...db.results.map(r=>[r.name,r.cls,r.test,r.score,r.total,r.date])];let csv=rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='school-test-results.csv';a.click();URL.revokeObjectURL(a.href)}
+renderTests();if(db.pin){document.getElementById('setupAdmin').classList.add('hidden');document.getElementById('loginAdmin').classList.remove('hidden')}
+</script></body></html>
